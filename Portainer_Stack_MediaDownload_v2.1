@@ -1,0 +1,109 @@
+version: '2.1'
+services:
+ transmission-openvpn:
+    volumes:
+        - <path_to_your_transmissionopenvpn_data_folder>:/data
+        - <path_to_your_completed_downloads_folder>:/data/completed
+        - <path_to_your_incomplete_downloads_folder>:/data/incomplete
+        - /etc/localtime:/etc/localtime:ro
+    environment:
+        - PUID=1000 #change to your PUID. ssh into your raspi and run id
+        - PGID=1000 #path to your PGID
+        - CREATE_TUN_DEVICE=true
+        - OPENVPN_PROVIDER=YourProdiver #read haugene's provider list here https://haugene.github.io/docker-transmission-openvpn/supported-providers/
+        - OPENVPN_CONFIG=netherlands #example. change to your prefered 
+        - OPENVPN_USERNAME=yourVPNuser
+        - OPENVPN_PASSWORD=yourVPNpass
+        - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+        - WEBPROXY_ENABLED=false
+        - LOCAL_NETWORK=192.168.1.0/24 #change to your local network
+        - TRANSMISSION_SCRAPE_PAUSED_TORRENTS_ENABLED=false
+        - TRANSMISSION_WEB_UI=combustion #optional. removing this entire line uses transmission default skin
+        - TRANSMISSION_DOWNLOAD_QUEUE_SIZE=4 #optional. can remove line or adjust to prefered value
+        - DNS=209.222.18.222,209.222.18.218 #change to your prefered DNS provider or leave as is
+    cap_add:
+        - NET_ADMIN
+    logging:
+        driver: json-file
+        options:
+            max-size: 10m
+    ports: #here we are exposing all local ports for this container and all dependants below. adjust left column as you wish
+        - 9091:9091 
+        - 9117:9117
+        - 7878:7878
+        - 8989:8989
+        - 8124:8123
+        - 3129:3129 
+    restart: always
+    image: haugene/transmission-openvpn
+ 
+ jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    network_mode: "service:transmission-openvpn"  #note. here we are telling this container to funnel all traffic through the above transmission/openvpn container
+    environment:
+        - PUID=1000 #change to your PUID
+        - PGID=1000 #change to your PGID
+        - TZ=Europe/Berlin #change to your TZ
+        - AUTO_UPDATE=true #optional
+        - RUN_OPTS=#optional
+    volumes:
+        - <path_to_your_jacket_config>:/config
+        #Jackett only needs config
+    restart: unless-stopped
+ 
+ radarr:
+    image: linuxserver/radarr:nightly #the nightly is so much better
+    network_mode: "service:transmission-openvpn"
+    container_name: radarr
+    environment:
+        - PUID=1000 #change
+        - PGID=1000 #change
+        - TZ=Europe/Berlin #change
+        - UMASK_SET=022 #optional
+    volumes:
+        - <path_to_your_radarr_config>:/config
+        - <path_to_your_movies_folder>:/movies
+        - <path to your_downloads_folder>:/downloads #for all downloads, completed and incomplete folders stay consistant. Keep them the same across all containers
+        - <path_to_your_incomplete>:/incomplete
+        - <path_to_your_completed>:/data/completed
+    restart: unless-stopped
+ 
+ sonarr:
+    image: linuxserver/sonarr:preview #the preview (nightly) is much better
+    network_mode: "service:transmission-openvpn"
+    container_name: sonarr
+    environment:
+        - PUID=1000 #change
+        - PGID=1000 #change
+        - TZ=Europe/Berlin #change
+        - UMASK_SET=022 #optional
+    volumes:
+        - <path_to_your_sonarr_config>:/config
+        - <path_to_your_series_folder>:/series
+        - <path to your_downloads_folder>:/downloads #for all downloads, completed and incomplete folder paths stay consistant. Keep them the same across all containers
+        - <path_to_your_incomplete>:/incomplete
+        - <path_to_your_completed>:/data/completed
+    restart: unless-stopped
+        
+ jdownloader:
+    image: jaymoulin/jdownloader
+    network_mode: "service:transmission-openvpn"
+    container_name: jdownloader
+    volumes:
+        - <path_to_your_jdownloader_config>:/opt/JDownloader/cfg
+        - <path_to_your_jdownloader_download>:/opt/JDownloader/Downloads
+        - <path_to_your_jdownloader_logs>:/opt/JDownloader/logs #optional
+        - /etc/localtime:/etc/localtime:ro #optional
+    environment: 
+        - PUID=1000 #change
+        - PGID=1000 #change
+        - TZ=Europe/Berlin #change
+        - MYJD_USER=yourMyJDusername #(see [Identify](https://github.com/jaymoulin/docker-jdownloader#identify))
+        - MYJD_PASSWORD=yourMyJDpass #(see [Identify](https://github.com/jaymoulin/docker-jdownloader#identify))
+        - MYJD_DEVICE_NAME=yourMyJDdevicename #optional
+        - XDG_DOWNLOAD_DIR=<path_to_your_jdownloader_download> #optional
+    restart: unless-stopped
+
+
+
