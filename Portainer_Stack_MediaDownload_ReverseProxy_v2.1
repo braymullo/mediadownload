@@ -11,7 +11,7 @@ services:
         - PGID=1000 #change
    
     volumes:
-       - <path_to_your_nginx_templates_folder>:/etc/nginx/
+       - <path_to_your_nginx_templates_folder>:/etc/nginx/   #note place your modified nginx.conf here. see repo for exmaple file
     ports:
        - 8080:8080
     image: haugene/transmission-openvpn-proxy:dev
