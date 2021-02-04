@@ -1,0 +1,19 @@
+version: '2.1'
+
+links: 
+       -  transmission-openvpn:transmission   
+
+services:
+  transmission:
+  
+    environment:
+        - PUID=1000 #change to yours
+        - PGID=1000 #change
+   
+    volumes:
+       - <path_to_your_nginx_templates_folder>:/etc/nginx/
+    ports:
+       - 8080:8080
+    image: haugene/transmission-openvpn-proxy:dev
+
+    restart: unless-stopped
