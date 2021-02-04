@@ -2,6 +2,7 @@
 Portainer Docker Compose for Media Downloaders behind a VPN with psuedo kill switch by funneling all traffic through the OpenVPN container.
 
 modified from https://hub.docker.com/r/haugene/transmission-openvpn
+
 list of supported VPN providers here: https://haugene.github.io/docker-transmission-openvpn/supported-providers/
 
 Go through the MediaDownloads main stack and adjust to taste, add and remove whatever you like.
